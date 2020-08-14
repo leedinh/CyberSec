@@ -1,0 +1,10 @@
+Enter the command you want to execute.
+[1] list
+[2] init <ID> <type> <l>
+		malloc(40 byte)
+
+[3] delete <ID> 
+[4] set <ID> <i> <value>
+[5] get <ID> <i>
+[6] quit
+

