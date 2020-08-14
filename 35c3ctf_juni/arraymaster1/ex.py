@@ -34,8 +34,7 @@ def get(p,a,b):
 def quit(p):
     p.recvuntil('\n> ')
     p.sendline('quit')
-init(p,'A',64,0xffffffdis)
-list_info(p)
+init(p,'A',64,0xffffffffffffffff+1/8)
 
 p.interactive()
              
