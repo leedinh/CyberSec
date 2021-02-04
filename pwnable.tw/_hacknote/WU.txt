@@ -1,0 +1,29 @@
+WRITE UP FOR HACKNOTE
+
+OVERVIEW
+The program has basicaly three 3 options for u to do sth with it:
+ Add_note: malloc two chunk
+	+ 8 byte chunk, for 2 ptr (print_node_ptr+ content_ptr)
+	+ size controled chunk, input size and content
+ 
+ Delete_note: input index and free 2 chunk of ptr from that index
+ 
+ Print_note: input index and call print_note_ptr to print data at content_ptr
+ 
+BUG:
+Use ptr_array to save these ptr when malloc but free without null assign to these index->Use after free bug
+
+EXPLOIT:
+malloc 2 note 16 byte -> 2 chunk of 8 bytes and 2 chunk of 16 bytes
+free 2 note above
+Tcache state:
+0x10: 8_bytes_0<-8_bytes_1
+0x18: 16_bytes_0<-16_bytes_1
+
+malloc 1 note 8 byte ->2 chunk of 8 bytes
+frist 8 byte-> 8_bytes_1 
+second 8 byte-> 8_bytes_0 -> place of content_ptr_2 as print_note_ptr_0
+-> we can write data on this place then call it with print_note(0)
+
+We can use this to leak libc by call_print_note+plt.['puts']
+then free(2) malloc(8) again, to call system+';sh;'

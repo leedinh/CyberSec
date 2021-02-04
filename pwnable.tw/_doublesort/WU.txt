@@ -1,0 +1,14 @@
+WRITE UP
+
+OVERVIEW: program read in name and number of element of int array then input elements -> sort
+	  There is a canary
+
+BUG: use read() to read name -> leakable
+     no upperbound for number element -> buffer overflow int_array
+
+EXPLOIT: use read() to leak libc on stack
+	*Canary bypass: use scanf(%u) to read elements if  we can input special character that won't change the value at canary ('+' or '-') 
+	The array will accending sort so inputs should increasing order to make no change on the payload, then use ret2libc techni [sys+bin_sh]
+	Fortunately, canary< sys< bin_sh
+Payload layout:
+int_arr[35]: ['1'*24] + ['+'] + [sys*8] + [bin_sh*2] (this is 32-bit elf so use x86 calling convention (sys+ retofsys + bin_sh))
